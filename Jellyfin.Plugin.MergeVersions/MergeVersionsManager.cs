@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -178,7 +177,7 @@ namespace Jellyfin.Plugin.MergeVersions
             }
 
             var primaryVersion = items.FirstOrDefault(i =>
-                i.MediaSourceCount > 1 && string.IsNullOrEmpty(i.PrimaryVersionId)
+                i.MediaSourceCount > 1 && !i.PrimaryVersionId.HasValue
             );
             if (primaryVersion is null)
             {
@@ -205,9 +204,7 @@ namespace Jellyfin.Plugin.MergeVersions
                 !i.Id.Equals(primaryVersion.Id) &&
                 !alternateVersionsOfPrimary.Any(l => l.ItemId == i.Id)))
             {
-                item.SetPrimaryVersionId(
-                    primaryVersion.Id.ToString("N", CultureInfo.InvariantCulture)
-                );
+                item.SetPrimaryVersionId(primaryVersion.Id);
 
                 await item.UpdateToRepositoryAsync(
                         ItemUpdateType.MetadataEdit,
@@ -257,7 +254,7 @@ namespace Jellyfin.Plugin.MergeVersions
 
             if (item.LinkedAlternateVersions.Length == 0 && item.PrimaryVersionId != null)
             {
-                item = _libraryManager.GetItemById<Video>(Guid.Parse(item.PrimaryVersionId));
+                item = _libraryManager.GetItemById<Video>(item.PrimaryVersionId.Value);
             }
 
             if (item is null)
@@ -265,7 +262,7 @@ namespace Jellyfin.Plugin.MergeVersions
                 return;
             }
 
-            foreach (var link in item.GetLinkedAlternateVersions())
+            foreach (var link in _libraryManager.GetLinkedAlternateVersions(item))
             {
                 link.SetPrimaryVersionId(null);
                 link.LinkedAlternateVersions = [];
