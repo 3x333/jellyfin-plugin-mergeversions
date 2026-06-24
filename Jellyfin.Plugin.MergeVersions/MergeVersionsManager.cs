@@ -196,7 +196,7 @@ namespace Jellyfin.Plugin.MergeVersions
             }
 
             var alternateVersionsOfPrimary = primaryVersion
-                .LinkedAlternateVersions.Where(l => items.Any(i => i.Path == l.Path))
+                .LinkedAlternateVersions.Where(l => items.Any(i => i.Id == l.ItemId))
                 .ToList();
 
             var alternateVersionsChanged = false;
@@ -214,8 +214,7 @@ namespace Jellyfin.Plugin.MergeVersions
 
                 // TODO: due to check in foreach it can't be an alternate version yet?
                 AddToAlternateVersionsIfNotPresent(alternateVersionsOfPrimary,
-                                                new LinkedChild { Path = item.Path,
-                                                                  ItemId = item.Id });
+                                                new LinkedChild { ItemId = item.Id });
 
                 foreach (var linkedItem in item.LinkedAlternateVersions)
                 {
@@ -319,11 +318,7 @@ namespace Jellyfin.Plugin.MergeVersions
         private void AddToAlternateVersionsIfNotPresent(List<LinkedChild> alternateVersions,
                                                         LinkedChild newVersion)
         {
-            if (!alternateVersions.Any(
-                i => string.Equals(i.Path,
-                                newVersion.Path,
-                                StringComparison.OrdinalIgnoreCase
-                            )))
+            if (!alternateVersions.Any(i => i.ItemId == newVersion.ItemId))
             {
                 alternateVersions.Add(newVersion);
             }
